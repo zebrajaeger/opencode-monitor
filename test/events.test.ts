@@ -44,4 +44,29 @@ describe("event monitoring", () => {
     }
     expect(renderEvent(event, now)).toBe(`[${time}] THINK   checking current API`)
   })
+
+  it("renders shell commands and structured tool inputs", () => {
+    const shell: GlobalEvent = {
+      payload: { type: "session.next.shell.started", properties: { sessionID: "one", command: "openspec list --json" } },
+    }
+    const tool: GlobalEvent = {
+      payload: { type: "session.next.tool.called", properties: { sessionID: "one", tool: "bash", input: { command: "npm test" } } },
+    }
+    expect(renderEvent(shell, now)).toBe(`[${time}] TOOL    Shell running: openspec list --json`)
+    expect(renderEvent(tool, now)).toBe(`[${time}] TOOL    bash running: {"command":"npm test"}`)
+  })
+
+  it("truncates long tool input", () => {
+    const event: GlobalEvent = {
+      payload: { type: "session.next.shell.started", properties: { sessionID: "one", command: "x".repeat(300) } },
+    }
+    expect(renderEvent(event, now)).toContain("...")
+  })
+
+  it("renders retry status details", () => {
+    const event: GlobalEvent = {
+      payload: { type: "session.status", properties: { sessionID: "one", status: { type: "retry", message: "rate limited", next: 0 } } },
+    }
+    expect(renderEvent(event, now)).toContain("rate limited")
+  })
 })

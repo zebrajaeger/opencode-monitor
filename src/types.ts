@@ -8,6 +8,7 @@ export type Session = {
 
 export type SessionSummary = Session & {
   status: SessionStatus
+  statusDetail?: string
 }
 
 export type Environment = {

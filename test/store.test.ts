@@ -30,4 +30,19 @@ describe("MonitorStore", () => {
     await store.refreshDiff("one")
     expect((await store.detail("one")).timeline[0]).toMatchObject({ category: "EDIT", text: "src/a.ts" })
   })
+
+  it("keeps tool input available across a later status event", async () => {
+    const store = new MonitorStore(client() as never)
+    await store.initialize()
+    store.apply({ payload: { type: "session.next.tool.called", properties: { sessionID: "one", callID: "call", tool: "bash", input: { command: "npm test" } } } })
+    store.apply({ payload: { type: "session.next.tool.success", properties: { sessionID: "one", callID: "call", result: "ok" } } })
+    expect((await store.detail("one")).timeline[1].text).toContain('input={"command":"npm test"}')
+  })
+
+  it("keeps retry details on a session", async () => {
+    const store = new MonitorStore(client() as never)
+    await store.initialize()
+    store.apply({ payload: { type: "session.status", properties: { sessionID: "one", status: { type: "retry", message: "wait" } } } })
+    expect(store.snapshot().sessions[0]).toMatchObject({ status: "retry", statusDetail: "wait" })
+  })
 })

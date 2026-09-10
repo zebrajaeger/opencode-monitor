@@ -35,6 +35,8 @@ describe("dashboard server", () => {
     const page = await fetch(dashboardServer.url).then((response) => response.text())
     expect(page).toContain("@media(max-width:850px)")
     expect(page).toContain("Observed runtime activity")
+    expect(page).toContain('new Date(e.at).toLocaleTimeString')
+    expect(page).toContain('class="time"')
     const snapshot = await fetch(`${dashboardServer.url}/api/snapshot`).then((response) => response.json())
     expect(snapshot.sessions[0]).toMatchObject({ id: "one", status: "busy" })
     const detail = await fetch(`${dashboardServer.url}/api/sessions/one`).then((response) => response.json())

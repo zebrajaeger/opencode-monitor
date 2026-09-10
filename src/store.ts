@@ -1,6 +1,6 @@
 import { changedFiles } from "./diff.js"
 import { eventSessionId } from "./events.js"
-import { renderEdit, renderEvent } from "./render.js"
+import { renderEdit, renderEvent, type ToolContext } from "./render.js"
 import { OpenCodeClient, type FileDiff } from "./client.js"
 import type { Environment, GlobalEvent, RuntimeActivity, Session, SessionDetail, SessionSummary, TimelineEntry } from "./types.js"
 
@@ -12,6 +12,7 @@ export class MonitorStore {
   private timelines = new Map<string, TimelineEntry[]>()
   private runtime = new Map<string, RuntimeActivity[]>()
   private diffs = new Map<string, FileDiff[]>()
+  private toolCalls = new Map<string, ToolContext>()
   private sequence = 0
   private listeners = new Set<(event: StoreEvent) => void>()
 
@@ -59,14 +60,17 @@ export class MonitorStore {
     if (!sessionId) return
     if (event.payload.type === "session.status") {
       const status = (event.payload.properties.status as { type?: string } | undefined)?.type
+      const statusValue = event.payload.properties.status as { type?: string; message?: string; next?: number } | undefined
       const session = this.sessions.get(sessionId)
       if (session && status) {
         session.status = statusOf({ type: status })
+        session.statusDetail = statusValue?.message ?? (statusValue?.next ? `next=${new Date(statusValue.next).toLocaleTimeString()}` : undefined)
         this.emit({ type: "session", session })
       }
     }
 
-    const rendered = renderEvent(event)
+    const context = this.captureToolContext(sessionId, event)
+    const rendered = renderEvent(event, new Date(), context)
     if (rendered) this.addTimeline(sessionId, eventCategory(rendered), rendered.replace(/^\[[^\]]+\]\s+\w+\s+/, ""))
     if (event.payload.type.includes("agent") || event.payload.type.includes("subtask")) {
       const label = String(event.payload.properties.agent ?? event.payload.properties.name ?? event.payload.type)
@@ -74,6 +78,31 @@ export class MonitorStore {
       this.runtime.set(sessionId, [activity, ...(this.runtime.get(sessionId) ?? []).filter((item) => item.id !== activity.id)].slice(0, 30))
       this.emit({ type: "runtime", sessionId })
     }
+  }
+
+  private captureToolContext(sessionId: string, event: GlobalEvent): ToolContext | undefined {
+    const properties = event.payload.properties
+    const part = properties.part as { type?: unknown; callID?: unknown; tool?: unknown; state?: { input?: unknown } } | undefined
+    const callId = typeof properties.callID === "string" ? properties.callID : typeof part?.callID === "string" ? part.callID : undefined
+    if (!callId) return undefined
+    const key = `${sessionId}:${callId}`
+    const current = this.toolCalls.get(key) ?? {}
+    if (event.payload.type === "session.next.tool.called") {
+      current.tool = typeof properties.tool === "string" ? properties.tool : current.tool
+      current.input = compactInput(properties.input)
+    }
+    if (event.payload.type === "session.next.shell.started") {
+      current.tool = "Shell"
+      current.input = typeof properties.command === "string" ? properties.command : current.input
+    }
+    if (event.payload.type === "message.part.updated") {
+      if (part?.type === "tool") {
+        current.tool = typeof part.tool === "string" ? part.tool : current.tool
+        if (part.state?.input) current.input = compactInput(part.state.input)
+      }
+    }
+    this.toolCalls.set(key, current)
+    return current
   }
 
   async refreshDiff(id: string): Promise<void> {
@@ -103,6 +132,11 @@ export type StoreEvent =
 
 function statusOf(status: { type: string } | undefined): SessionSummary["status"] {
   return status?.type === "idle" || status?.type === "busy" || status?.type === "retry" ? status.type : "unknown"
+}
+
+function compactInput(value: unknown): string {
+  if (typeof value === "string") return value
+  try { return JSON.stringify(value) } catch { return String(value ?? "") }
 }
 
 function eventCategory(line: string): TimelineEntry["category"] {
