@@ -1,0 +1,27 @@
+{
+  "name": "opencode-monitor",
+  "version": "0.1.0",
+  "description": "Read-only console monitor for OpenCode sessions",
+  "type": "module",
+  "bin": {
+    "opencode-monitor": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "start": "node dist/cli.js"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
