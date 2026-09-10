@@ -45,6 +45,30 @@ export class OpenCodeClient {
     return this.getJson<FileDiff[]>(`/session/${encodeURIComponent(id)}/diff`)
   }
 
+  async agents(): Promise<Array<{ name?: string; id?: string; [key: string]: unknown }>> {
+    return this.getJson("/agent")
+  }
+
+  async toolIds(): Promise<string[]> {
+    return this.getJson("/experimental/tool/ids")
+  }
+
+  async mcp(): Promise<Array<{ name?: string; status?: string; [key: string]: unknown }>> {
+    return this.getJson("/mcp")
+  }
+
+  async lsp(): Promise<Array<{ name?: string; status?: string; [key: string]: unknown }>> {
+    return this.getJson("/lsp")
+  }
+
+  async formatters(): Promise<Array<{ name?: string; [key: string]: unknown }>> {
+    return this.getJson("/formatter")
+  }
+
+  async children(id: string): Promise<Session[]> {
+    return this.getJson<Session[]>(`/session/${encodeURIComponent(id)}/children`)
+  }
+
   async *events(signal?: AbortSignal): AsyncGenerator<GlobalEvent> {
     let response: Response
     try {

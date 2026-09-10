@@ -1,6 +1,6 @@
 # opencode-monitor
 
-`opencode-monitor` is a read-only console monitor for one running OpenCode session. It does not send prompts, edit files, answer permissions, or change OpenCode configuration.
+`opencode-monitor` opens a read-only local browser dashboard for running OpenCode sessions. It does not send prompts, edit files, answer permissions, or change OpenCode configuration.
 
 ## Prerequisites
 
@@ -12,13 +12,13 @@ opencode --port 4096
 
 ## Usage
 
-Run the package and choose a conversation interactively:
+Run the package to open the dashboard, then choose a conversation in the browser:
 
 ```bash
 npx opencode-monitor
 ```
 
-Connect to a specific server and session without a prompt:
+Connect to a specific server and open the dashboard with one session selected:
 
 ```bash
 npx opencode-monitor --url http://127.0.0.1:4096 --session <session-id>
@@ -40,4 +40,4 @@ npx opencode-monitor --host 127.0.0.1 --port 4096
 | `--session <id>` | Watch one known session directly. |
 | `-h`, `--help` | Show command help. |
 
-The monitor shows session status, visible reasoning, tool states, todos, permission requests, errors, and file changes reported by the selected session's read-only diff endpoint. It begins with new activity after connecting; it does not reconstruct a complete session history.
+The dashboard binds only to `127.0.0.1`, then opens the local URL in the default browser. It shows sessions, visible reasoning, tool states, todos, permission requests, errors, file changes reported by the selected session's read-only diff endpoint, and the OpenCode environment (agents, tools, MCP, LSP, and formatters). The observed runtime-activity view is best effort; it does not claim a complete subagent history. The monitor begins with new activity after connecting and does not reconstruct a complete session history.

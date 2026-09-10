@@ -59,4 +59,18 @@ describe("OpenCodeClient", () => {
     const stream = client.events()
     await expect(stream.next()).rejects.toThrow("disconnected")
   })
+
+  it("loads the read-only dashboard resources", async () => {
+    const client = new OpenCodeClient("http://server.test", async (input) => {
+      const url = String(input)
+      if (url.endsWith("/experimental/tool/ids")) return new Response('["bash"]')
+      return new Response("[]")
+    })
+    await expect(client.agents()).resolves.toEqual([])
+    await expect(client.toolIds()).resolves.toEqual(["bash"])
+    await expect(client.mcp()).resolves.toEqual([])
+    await expect(client.lsp()).resolves.toEqual([])
+    await expect(client.formatters()).resolves.toEqual([])
+    await expect(client.children("one")).resolves.toEqual([])
+  })
 })

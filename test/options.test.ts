@@ -11,6 +11,10 @@ describe("parseOptions", () => {
     expect(parseOptions(["--host", "localhost", "--port", "5000"]).baseUrl).toBe("http://localhost:5000")
   })
 
+  it("retains a requested dashboard session", () => {
+    expect(parseOptions(["--session", "abc"]).sessionId).toBe("abc")
+  })
+
   it("rejects conflicting addresses", () => {
     expect(() => parseOptions(["--url", "http://localhost:4096", "--port", "5000"])).toThrow("Use --url")
   })

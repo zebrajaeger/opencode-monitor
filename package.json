@@ -1,7 +1,7 @@
 {
   "name": "opencode-monitor",
   "version": "0.1.0",
-  "description": "Read-only console monitor for OpenCode sessions",
+  "description": "Read-only local dashboard for OpenCode sessions",
   "type": "module",
   "bin": {
     "opencode-monitor": "dist/cli.js"

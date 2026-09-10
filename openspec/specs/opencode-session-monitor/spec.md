@@ -2,16 +2,16 @@
 
 ## Purpose
 
-Ermoeglicht das Beobachten einer laufenden OpenCode-Konversation als lesbaren Echtzeit-Stream in einer separaten Konsole.
+Ermoeglicht das Beobachten laufender OpenCode-Konversationen in einem lokalen, lesbaren Browser-Dashboard.
 
 ## Requirements
 
 ### Requirement: Konfigurierbare Serververbindung
-Das CLI SHALL eine bestehende OpenCode-Serverinstanz als reinen Lese-Client verbinden. Es MUST eine vollstaendige Server-URL oder alternativ Host und Port akzeptieren; widerspruechliche Adressoptionen MUST mit einer erklaerenden Fehlermeldung abgewiesen werden. Ohne Adressoptionen MUST es `http://127.0.0.1:4096` verwenden und vor der Sitzungsauswahl die Erreichbarkeit pruefen.
+Das CLI SHALL eine bestehende OpenCode-Serverinstanz als reinen Lese-Client verbinden. Es MUST eine vollstaendige Server-URL oder alternativ Host und Port akzeptieren; widerspruechliche Adressoptionen MUST mit einer erklaerenden Fehlermeldung abgewiesen werden. Ohne Adressoptionen MUST es `http://127.0.0.1:4096` verwenden, vor dem Start des Dashboards die Erreichbarkeit pruefen und anschliessend einen lokalen Browserzugriff auf den Monitor starten.
 
 #### Scenario: Verbindung ueber Standardadresse
 - **WHEN** der Nutzer das CLI ohne Adressoption startet und ein OpenCode-Server unter `http://127.0.0.1:4096` erreichbar ist
-- **THEN** das CLI verbindet sich mit diesem Server und setzt den Ablauf zur Sitzungsauswahl fort
+- **THEN** das CLI verbindet sich mit diesem Server und startet das lokale Browser-Dashboard
 
 #### Scenario: Verbindung ueber explizite URL
 - **WHEN** der Nutzer eine vollstaendige Server-URL angibt

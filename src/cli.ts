@@ -1,11 +1,8 @@
 #!/usr/bin/env node
-import { OpenCodeClient, type FileDiff, sessionStatus } from "./client.js"
-import { changedFiles } from "./diff.js"
-import { belongsToSession } from "./events.js"
+import { OpenCodeClient } from "./client.js"
 import { helpText, parseOptions } from "./options.js"
-import { renderEdit, renderEvent } from "./render.js"
-import { selectSession } from "./select.js"
-import type { Session, SessionSummary } from "./types.js"
+import { startDashboard } from "./server.js"
+import { MonitorStore } from "./store.js"
 
 export async function main(args = process.argv.slice(2)): Promise<void> {
   const options = parseOptions(args)
@@ -16,54 +13,24 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
 
   const client = new OpenCodeClient(options.baseUrl)
   await client.health()
-  console.log(`Connected to OpenCode at ${options.baseUrl}`)
+  const store = new MonitorStore(client)
+  await store.initialize()
+  const dashboard = await startDashboard(store)
+  const url = options.sessionId ? `${dashboard.url}/?session=${encodeURIComponent(options.sessionId)}` : dashboard.url
+  console.log(`OpenCode Monitor: ${url}`)
+  await openBrowser(url)
 
-  const selected = await chooseSession(client, options.sessionId)
-  console.log(`Watching: ${selected.title || "Untitled"} (${selected.id})`)
+  for await (const event of client.events()) store.apply(event)
+}
 
-  let lastDiff: FileDiff[] = await client.diff(selected.id)
-  const diffPoller = setInterval(() => {
-    void printDiffChanges(client, selected.id, lastDiff)
-      .then((diff) => {
-        lastDiff = diff
-      })
-      .catch((error: unknown) => {
-        console.error(error instanceof Error ? error.message : String(error))
-      })
-  }, 1_000)
-
+async function openBrowser(url: string): Promise<void> {
   try {
-    for await (const event of client.events()) {
-    if (!belongsToSession(event, selected.id)) continue
-    const line = renderEvent(event)
-    if (line) console.log(line)
-    }
-  } finally {
-    clearInterval(diffPoller)
+    const { exec } = await import("node:child_process")
+    const command = process.platform === "win32" ? `start "" "${url}"` : process.platform === "darwin" ? `open "${url}"` : `xdg-open "${url}"`
+    exec(command)
+  } catch {
+    // The local URL has already been printed for manual browser opening.
   }
-}
-
-async function printDiffChanges(client: OpenCodeClient, sessionId: string, previous: FileDiff[]): Promise<FileDiff[]> {
-  const current = await client.diff(sessionId)
-  for (const diff of changedFiles(previous, current)) console.log(renderEdit(diff.file))
-  return current
-}
-
-async function chooseSession(client: OpenCodeClient, id: string | undefined): Promise<Session> {
-  if (id) {
-    try {
-      return await client.session(id)
-    } catch {
-      throw new Error(`OpenCode session "${id}" was not found.`)
-    }
-  }
-
-  const [sessions, statuses] = await Promise.all([client.sessions(), client.statuses()])
-  const choices: SessionSummary[] = sessions.map((session) => ({
-    ...session,
-    status: sessionStatus(statuses[session.id]),
-  }))
-  return selectSession(choices)
 }
 
 main().catch((error: unknown) => {

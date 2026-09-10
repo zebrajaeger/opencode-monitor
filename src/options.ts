@@ -64,13 +64,13 @@ function requireValue(option: string, value: string | undefined): string {
 
 export const helpText = `Usage: opencode-monitor [options]
 
-Observe one running OpenCode session without changing it.
+Open a local, read-only browser dashboard for OpenCode sessions without changing them.
 
 Options:
   --url <url>        OpenCode server URL (default: http://127.0.0.1:4096)
   --host <host>      OpenCode server host (default: 127.0.0.1)
   --port <port>      OpenCode server port (default: 4096)
-  --session <id>     Observe a session directly instead of choosing one
+  --session <id>     Open the dashboard with this session selected
   -h, --help          Show this help message
 
 Start OpenCode with a known address first, for example:
